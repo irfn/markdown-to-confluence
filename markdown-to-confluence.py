@@ -99,6 +99,13 @@ def parse_args():
         'The password for authentication to Confluence (default: env(\'CONFLUENCE_PASSWORD\'))'
     )
     parser.add_argument(
+        '--api-token',
+        dest='api_token',
+        default=os.getenv('CONFLUENCE_API_TOKEN'),
+        help=
+        'The API Token for authentication to Confluence (default: env(\'CONFLUENCE_API_TOKEN\'))'
+    )
+    parser.add_argument(
         '--space',
         dest='space',
         default=os.getenv('CONFLUENCE_SPACE'),
@@ -148,6 +155,14 @@ def parse_args():
     if not args.api_url:
         log.error('Please provide a valid API URL')
         sys.exit(1)
+    
+    if not args.username:
+        log.error('Please provide the Confluence username')
+        sys.exit(1)
+    
+    if not args.api_token and not args.password:
+        log.error('Please provide either an API token or password for authentication')
+        sys.exit(1)
 
     return parser.parse_args()
 
@@ -169,13 +184,15 @@ def deploy_file(post_path, args, confluence):
 
     try:
         front_matter, markdown = parse(post_path)
+        if not front_matter:
+            front_matter = {}            
     except Exception as e:
         log.error(
             'Unable to process {}. Normally not a problem, but here\'s the error we received: {}'
             .format(post_path, e))
         return
 
-    if 'wiki' not in front_matter or not front_matter['wiki'].get('share'):
+    if not front_matter or 'wiki' not in front_matter or not front_matter['wiki'].get('share'):
         log.info(
             'Post {} not set to be uploaded to Confluence'.format(post_path))
         return
@@ -234,6 +251,7 @@ def main():
     confluence = Confluence(api_url=args.api_url,
                             username=args.username,
                             password=args.password,
+                            api_token=args.api_token,
                             headers=args.headers,
                             dry_run=args.dry_run)
 

@@ -2,6 +2,7 @@ import logging
 import json
 import requests
 import os
+import base64
 
 from urllib.parse import urljoin
 
@@ -28,6 +29,7 @@ class Confluence():
                  api_url=None,
                  username=None,
                  password=None,
+                 api_token=None,
                  headers=None,
                  dry_run=False,
                  _client=None):
@@ -37,6 +39,7 @@ class Confluence():
             api_url {str} -- The URL to the Confluence API root (e.g. https://wiki.example.com/api/rest/)
             username {str} -- The Confluence service account username
             password {str} -- The Confluence service account password
+            api_token {str} -- The Confluence personal access token
             headers {list(str)} -- The HTTP headers which will be set for all requests
             dry_run {str} -- The Confluence service account password
         """
@@ -48,13 +51,18 @@ class Confluence():
 
         self.username = username
         self.password = password
+        self.api_token = api_token
         self.dry_run = dry_run
 
         if _client is None:
             _client = requests.Session()
 
         self._session = _client
-        self._session.auth = (self.username, self.password)
+        if not api_token:
+            self._session.auth = (self.username, self.password)
+        else:
+            basic_auth_string = base64.b64encode(f"{self.username}:{self.api_token}".encode('ascii')).decode('ascii')
+            self._session.headers["Authorization"] = "Basic {}".format(basic_auth_string)
         for header in headers or []:
             try:
                 name, value = header.split(':', 1)
