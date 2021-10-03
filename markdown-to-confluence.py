@@ -155,11 +155,11 @@ def parse_args():
     if not args.api_url:
         log.error('Please provide a valid API URL')
         sys.exit(1)
-    
+
     if not args.username:
         log.error('Please provide the Confluence username')
         sys.exit(1)
-    
+
     if not args.api_token and not args.password:
         log.error('Please provide either an API token or password for authentication')
         sys.exit(1)
